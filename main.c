@@ -83,7 +83,7 @@ PROC LibFunc[] =
   {"gd_close_file", "void gd_close_file(gd_GIF *gif);\n", gd_close_file},
 };
 
-LDGLIB LibLdg[] = { { 0x0001,	9, LibFunc, "GIF decoder from https://github.com/lecram", 1} };
+LDGLIB LibLdg[] = { { 0x0001,	12, LibFunc, "GIF decoder from https://github.com/lecram", 1} };
 
 /*  */
 
