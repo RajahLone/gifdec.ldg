@@ -31,9 +31,15 @@ int CDECL gd_open_file(gd_GIF *gif, const char *fname)
 
 int CDECL gd_get_width(gd_GIF *gif) { return gif->width; }
 int CDECL gd_get_height(gd_GIF *gif) { return gif->height; }
-int CDECL gd_get_depth(gd_GIF *gif) { return (gif->depth == 1) ? 1 : (gif->depth + 1); }
-uint8_t* CDECL gd_get_palette_ptr(gd_GIF *gif) { return &gif->gct.colors[0]; }
-int CDECL gd_get_bgindex(gd_GIF *gif) { return gif->bgindex; }
+
+int CDECL gd_get_depth(gd_GIF *gif) { return gif->depth; /*(gif->depth == 1) ? 1 : (gif->depth + 1);*/ } // TODO : à corriger, dans le GFA ?
+uint8_t* CDECL gd_get_palette(gd_GIF *gif) { return &gif->gct.colors[0]; }
+int CDECL gd_get_background_index(gd_GIF *gif) { return gif->bgindex; }
+
+int CDECL gd_has_transparency(gd_GIF *gif) { return gif->gce.transparency; } // 1 for transparency, else 0
+int CDECL gd_get_transparent_index(gd_GIF *gif) { return gif->gce.tindex; }
+
+int CDECL gd_get_delay(gd_GIF *gif) { return gif->gce.delay; }
 
 int CDECL gd_get_chunky_frame(gd_GIF *gif, uint8_t *buffer)
 {
@@ -41,9 +47,9 @@ int CDECL gd_get_chunky_frame(gd_GIF *gif, uint8_t *buffer)
   
   ret = gd_get_frame(gif);
   
-  if (ret != -1) { gd_render_frame(gif, buffer); }
+  if (ret == 1) { gd_render_frame(gif, buffer); }
   
-  return ret;
+  return ret; // 1: frame content is processed with possible next frame, 0: end = no next frame, -1: error
 }
 
 void CDECL gd_close_file(gd_GIF *gif)
@@ -62,11 +68,18 @@ PROC LibFunc[] =
   
   {"gd_get_width", "int gd_get_width(gd_GIF *gif);\n", gd_get_width},
   {"gd_get_height", "int gd_get_height(gd_GIF *gif);\n", gd_get_height},
-  {"gd_get_depth", "int gd_get_depth(gd_GIF *gif);\n", gd_get_depth},
-  {"gd_get_palette_ptr", "uint8_t* gd_get_palette_ptr(gd_GIF *gif);\n", gd_get_palette_ptr},
-  {"gd_get_bgindex", "int gd_get_bgindex(gd_GIF *gif);\n", gd_get_bgindex},
-  {"gd_get_chunky_frame", "int gd_get_chunky_frame(gd_GIF *gif, uint8_t *buffer);\n", gd_get_chunky_frame},
   
+  {"gd_get_depth", "int gd_get_depth(gd_GIF *gif);\n", gd_get_depth},
+  {"gd_get_palette", "uint8_t* gd_get_palette(gd_GIF *gif);\n", gd_get_palette},
+  {"gd_get_background_index", "int gd_get_background_index(gd_GIF *gif);\n", gd_get_background_index},
+  
+  {"gd_get_chunky_frame", "int gd_get_chunky_frame(gd_GIF *gif, uint8_t *buffer);\n", gd_get_chunky_frame},
+
+  {"gd_has_transparency", "int gd_has_transparency(gd_GIF *gif);\n", gd_has_transparency},
+  {"gd_get_transparent_index", "int gd_get_transparent_index(gd_GIF *gif);\n", gd_get_transparent_index},
+
+  {"gd_get_delay", "int gd_get_delay(gd_GIF *gif);\n", gd_get_delay},
+
   {"gd_close_file", "void gd_close_file(gd_GIF *gif);\n", gd_close_file},
 };
 
