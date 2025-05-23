@@ -2,6 +2,7 @@
 
 Library using the LDG system and the GIF decoder functions from https://github.com/lecram/gifdec with some modifications.
 Instead of generating TC24 bitmap, the result is 2D width x height sized byte-array of colors indexes (ie chunky format).
+This is public domain, same as the upstream project.
 
 Used by:
 

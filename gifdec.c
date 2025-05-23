@@ -59,13 +59,13 @@ gd_open_gif(const char *fname)
     /* Header */
     read(fd, sigver, 3);
     if (memcmp(sigver, "GIF", 3) != 0) {
-        //fprintf(stderr, "invalid signature\n");
+        //fprintf(stderr, "invalid signature\n"); // raj: no log reduces target size
         goto fail;
     }
     /* Version */
     read(fd, sigver, 3);
-    if ((memcmp(sigver, "89a", 3) == 0) || (memcmp(sigver, "87a", 3) == 0)) {} else {
-        //fprintf(stderr, "invalid version\n");
+    if ((memcmp(sigver, "89a", 3) == 0) || (memcmp(sigver, "87a", 3) == 0)) {} else { // raj: allow old 87a still found on Atari ST
+        //fprintf(stderr, "invalid version\n");                                       // raj: no log reduces target size
         goto fail;
     }
     /* Width x Height */
@@ -75,7 +75,7 @@ gd_open_gif(const char *fname)
     read(fd, &fdsz, 1);
     /* Presence of GCT */
     if (!(fdsz & 0x80)) {
-        //fprintf(stderr, "no global color table\n");
+        //fprintf(stderr, "no global color table\n"); // raj: no log reduces target size
         goto fail;
     }
     /* Color Space's Depth */
@@ -88,7 +88,7 @@ gd_open_gif(const char *fname)
     /* Aspect Ratio */
     read(fd, &aspect, 1);
     /* Create gd_GIF Structure. */
-    gif = ldg_Malloc(sizeof(*gif)); memset(gif, 0, sizeof(*gif));
+    gif = ldg_Malloc(sizeof(*gif)); memset(gif, 0, sizeof(*gif)); // raj: mallocs from ldg_ manager
     if (!gif) goto fail;
     gif->fd = fd;
     gif->width  = width;
@@ -99,9 +99,9 @@ gd_open_gif(const char *fname)
     read(fd, gif->gct.colors, 3 * gif->gct.size);
     gif->palette = &gif->gct;
     gif->bgindex = bgidx;
-    gif->frame = ldg_Malloc(width * height * 2); // raj: reduce frame to 2d array of color indexes (chunky mode)
+    gif->frame = ldg_Malloc(width * height * 2); // raj: reduce frame to 2d array of color indexes (chunky mode), mallocs from ldg_ manager
     if (!gif->frame) {
-        free(gif);
+        ldg_Free(gif); // raj: mallocs from ldg_ manager
         goto fail;
     }
     gif->canvas = &gif->frame[width * height];
@@ -244,7 +244,7 @@ new_table(int key_size)
 {
     int key;
     int init_bulk = MAX(1 << (key_size + 1), 0x100);
-    Table *table = malloc(sizeof(*table) + sizeof(Entry) * init_bulk);
+    Table *table = ldg_Malloc(sizeof(*table) + sizeof(Entry) * init_bulk); // raj: mallocs from ldg_ manager
     if (table) {
         table->bulk = init_bulk;
         table->nentries = (1 << key_size) + 2;
@@ -370,7 +370,7 @@ read_image_data(gd_GIF *gif, int interlace)
         } else if (!table_is_full) {
             ret = add_entry(&table, str_len + 1, key, entry.suffix);
             if (ret == -1) {
-                free(table);
+                ldg_Free(table); // raj: mallocs from ldg_ manager
                 return -1;
             }
             if (table->nentries == 0x1000) {
@@ -400,7 +400,7 @@ read_image_data(gd_GIF *gif, int interlace)
         if (key < table->nentries - 1 && !table_is_full)
             table->entries[table->nentries - 1].suffix = entry.suffix;
     }
-    free(table);
+    ldg_Free(table); // raj: mallocs from ldg_ manager
     if (key == stop)
         read(gif->fd, &sub_len, 1); /* Must be zero! */
     lseek(gif->fd, end, SEEK_SET);
@@ -524,6 +524,6 @@ void
 gd_close_gif(gd_GIF *gif)
 {
     close(gif->fd);
-    ldg_Free(gif->frame);
-    ldg_Free(gif);
+    ldg_Free(gif->frame); // raj: mallocs from ldg_ manager
+    ldg_Free(gif);        // raj: mallocs from ldg_ manager
 }
