@@ -1,7 +1,7 @@
 #
 # Makefile
 #
-CFLAGS  = -Wall -O -fomit-frame-pointer -Wno-maybe-uninitialized
+CFLAGS  = -Wall -O -fomit-frame-pointer
 LDFLAGS = -s
 LDLIBS  = -lldg -lgif
 
