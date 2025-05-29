@@ -105,7 +105,30 @@ int32_t CDECL gifdec_get_image_delay(GifFileType* gif, int idx)
   return gcb.DelayTime;
 }
 
-int32_t CDECL gifdec_close(GifFileType *gif) { int error; free(palette); palette = NULL; DGifCloseFile(gif, &error); return -error; }
+int32_t CDECL gifdec_close(GifFileType *gif)
+{
+  int error, ret;
+  
+  free(palette);
+  palette = NULL;
+
+  GifFileType *tmp = malloc(sizeof(GifFileType));
+	
+	if (tmp)
+	{
+	  memcpy(tmp, gif, sizeof(GifFileType));
+ 
+		ret = DGifCloseFile(tmp, &error);
+		
+		memset(gif, 0, sizeof(GifFileType));
+		
+		gif->Error = error;
+		
+		return ret;
+	}
+ 
+  return GIF_ERROR;
+}
 
 const char * CDECL gifdec_get_last_error(GifFileType *gif) { return GifErrorString(gif->Error); }
 
