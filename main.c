@@ -39,6 +39,7 @@ int32_t CDECL gifdec_read(GifFileType *gif) { return (int32_t)DGifSlurp(gif); }
 const char * CDECL gifdec_get_gif_version(GifFileType *gif) { return DGifGetGifVersion(gif); }
 int32_t CDECL gifdec_get_width(GifFileType *gif) { return (int32_t)gif->SWidth; }
 int32_t CDECL gifdec_get_height(GifFileType *gif) { return (int32_t)gif->SHeight; }
+int32_t CDECL gifdec_get_color_resolution(GifFileType *gif) { return (int32_t)gif->SColorResolution; }
 int32_t CDECL gifdec_get_bckgrnd_index(GifFileType *gif) { return (int32_t)gif->SBackGroundColor; }
 
 int32_t CDECL gifdec_get_images_count(GifFileType *gif) { return (int32_t)gif->ImageCount; }
@@ -88,6 +89,14 @@ GifByteType* CDECL gifdec_get_chunky_raster(GifFileType *gif, int idx)
   return (idx < 0 || idx >= gif->ImageCount) ? NULL : (gif->SavedImages[idx]).RasterBits;
 }
 
+int32_t CDECL gifdec_get_image_disposal(GifFileType* gif, int idx)
+{
+  if ((idx < 0) || (idx < gif->ImageCount)) { return 0; }
+  
+  GraphicsControlBlock gcb = {0};
+  DGifSavedExtensionToGCB(gif, idx, &gcb);
+  return gcb.DisposalMode;
+}
 int32_t CDECL gifdec_get_trnsprnt_index(GifFileType* gif, int idx)
 {
   if (idx < 0 || idx >= gif->ImageCount) { return -1; }
@@ -146,6 +155,7 @@ PROC LibFunc[] =
   {"gifdec_get_gif_version", "const char* gifdec_get_gif_version(GifFileType *gif);\n", gifdec_get_gif_version},
   {"gifdec_get_width", "int32_t gifdec_get_width(GifFileType *gif);\n", gifdec_get_width},
   {"gifdec_get_height", "int32_t gifdec_get_height(GifFileType *gif);\n", gifdec_get_height},
+  {"gifdec_get_color_resolution", "int32_t gifdec_get_color_resolution(GifFileType *gif);\n", gifdec_get_color_resolution},
   {"gifdec_get_bckgrnd_index", "int32_t gifdec_get_bckgrnd_index(GifFileType *gif);\n", gifdec_get_bckgrnd_index},
 
   {"gifdec_get_images_count", "int32_t gifdec_get_images_count(GifFileType *gif);\n", gifdec_get_images_count},
@@ -157,6 +167,7 @@ PROC LibFunc[] =
   {"gifdec_get_colors_table", "uint8_t* gifdec_get_colors_table(GifFileType *gif, int idx);\n", gifdec_get_colors_table},
   {"gifdec_get_chunky_raster", "uint8_t* gifdec_get_chunky_raster(GifFileType *gif, int idx);\n", gifdec_get_chunky_raster},
   
+  {"gifdec_get_image_disposal", "int32_t gifdec_get_image_disposal(GifFileType* gif, int idx);\n", gifdec_get_image_disposal},
   {"gifdec_get_trnsprnt_index", "int32_t gifdec_get_trnsprnt_index(GifFileType* gif, int idx);\n", gifdec_get_trnsprnt_index},
   {"gifdec_get_image_delay", "int32_t gifdec_get_image_delay(GifFileType* gif, int idx);\n", gifdec_get_image_delay},
 
@@ -165,7 +176,7 @@ PROC LibFunc[] =
   {"gifdec_get_last_error", "const char* gifdec_get_last_error(GifFileType *gif);\n", gifdec_get_last_error},
 };
 
-LDGLIB LibLdg[] = { { 0x0001, 20, LibFunc, VERSION_LDG(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE), 1} };
+LDGLIB LibLdg[] = { { 0x0001, 22, LibFunc, VERSION_LDG(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE), 1} };
 
 /*  */
 
