@@ -91,7 +91,7 @@ GifByteType* CDECL gifdec_get_chunky_raster(GifFileType *gif, int idx)
 
 int32_t CDECL gifdec_get_image_disposal(GifFileType* gif, int idx)
 {
-  if ((idx < 0) || (idx < gif->ImageCount)) { return 0; }
+  if (idx < 0 || idx >= gif->ImageCount) { return 0; }
   
   GraphicsControlBlock gcb = {0};
   DGifSavedExtensionToGCB(gif, idx, &gcb);
@@ -107,7 +107,7 @@ int32_t CDECL gifdec_get_trnsprnt_index(GifFileType* gif, int idx)
 }
 int32_t CDECL gifdec_get_image_delay(GifFileType* gif, int idx)
 {
-  if ((idx < 0) || (idx < gif->ImageCount)) { return 0; }
+  if (idx < 0 || idx >= gif->ImageCount) { return 0; }
   
   GraphicsControlBlock gcb = {0};
   DGifSavedExtensionToGCB(gif, idx, &gcb);
