@@ -8,7 +8,7 @@
 
 #define STRINGIFY(x) #x
 #define VERSION_LIB(A,B,C) STRINGIFY(A) "." STRINGIFY(B) "." STRINGIFY(C)
-#define VERSION_LDG(A,B,C) "GIF decoder from the GIFLIB Project (" STRINGIFY(A) "." STRINGIFY(B) "." STRINGIFY(C) ")"
+#define VERSION_LDG(A,B,C) "GIF decoder from The GIFLib Project (" STRINGIFY(A) "." STRINGIFY(B) "." STRINGIFY(C) ")"
 
 /* global variables */
 
@@ -104,7 +104,7 @@ int32_t CDECL gifdec_close(GifFileType *gif)
   free(palette);
   palette = NULL;
  
-	return DGifCloseFile(gif, &error);
+  return DGifCloseFile(gif, &error);
 }
 
 const char * CDECL gifdec_get_last_error(GifFileType *gif) { return GifErrorString(gif->Error); }
