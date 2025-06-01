@@ -19,7 +19,7 @@ uint8_t *palette;
 
 const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE); }
 
-GifFileType * CDECL gifdec_open(const char *fileName) { return DGifOpenFileName(fileName, &error); }
+GifFileType * CDECL gifdec_open(const char *fileName) { error = 0; return DGifOpenFileName(fileName, &error); }
 int32_t CDECL gifdec_read(GifFileType *gif) { return (int32_t)DGifSlurp(gif); }
 
 const char * CDECL gifdec_get_gif_version(GifFileType *gif) { return DGifGetGifVersion(gif); }
@@ -103,8 +103,11 @@ int32_t CDECL gifdec_close(GifFileType *gif)
 {
   free(palette);
   palette = NULL;
+  error = 0;
  
-  return DGifCloseFile(gif, &error);
+  if (DGifCloseFile(gif, &error) == GIF_ERROR) { return -error; }
+  
+  return GIF_OK;
 }
 
 const char * CDECL gifdec_get_last_error(GifFileType *gif) { return GifErrorString(gif->Error); }
