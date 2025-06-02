@@ -12,14 +12,13 @@
 
 /* global variables */
 
-int error;
-uint8_t *palette;
+static uint8_t *palette;
 
 /* functions */
 
 const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE); }
 
-GifFileType * CDECL gifdec_open(const char *fileName) { error = 0; return DGifOpenFileName(fileName, &error); }
+GifFileType * CDECL gifdec_open(const char *fileName) { return DGifOpenFileName(fileName, NULL); }
 int32_t CDECL gifdec_read(GifFileType *gif) { return (int32_t)DGifSlurp(gif); }
 
 const char * CDECL gifdec_get_gif_version(GifFileType *gif) { return DGifGetGifVersion(gif); }
@@ -53,9 +52,9 @@ uint8_t* CDECL gifdec_get_colors_table(GifFileType *gif, int idx)
   GifImageDesc *dsc = &gif->SavedImages[idx].ImageDesc;
   ColorMapObject *map = dsc->ColorMap ? dsc->ColorMap : gif->SColorMap;
   
-  if (!palette) { palette = calloc(1, 256 * 3); } else { memset(palette, 0, 256 * 3); }
+  if (!palette) { palette = (uint8_t *)malloc(768); }
   
-  if (!palette) { return NULL; }
+  if (palette) { memset(palette, 0, 768); } else { return NULL; }
   
   p = palette;
   for (int c = 0; c < map->ColorCount; c++)
@@ -103,9 +102,8 @@ int32_t CDECL gifdec_close(GifFileType *gif)
 {
   free(palette);
   palette = NULL;
-  error = 0;
  
-  if (DGifCloseFile(gif, &error) == GIF_ERROR) { return -error; }
+  DGifCloseFile(gif, NULL);
   
   return GIF_OK;
 }
