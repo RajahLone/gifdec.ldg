@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <gem.h>
 #include <ldg.h>
 #include <gif_lib.h>
 
@@ -10,15 +11,46 @@
 #define VERSION_LIB(A,B,C) STRINGIFY(A) "." STRINGIFY(B) "." STRINGIFY(C)
 #define VERSION_LDG(A,B,C) "GIF decoder from The GIFLib Project (" STRINGIFY(A) "." STRINGIFY(B) "." STRINGIFY(C) ")"
 
+/* structures */
+
+typedef struct GifLdgBuffer {
+    uint8_t *data;
+    int size;
+    int offset;
+} GifLdgBuffer;
+
 /* global variables */
 
 static uint8_t *palette;
+
+static GifLdgBuffer buffer;
 
 /* functions */
 
 const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE); }
 
-GifFileType * CDECL gifdec_open(const char *fileName) { return DGifOpenFileName(fileName, NULL); }
+int gifldg_read(GifFileType* gif, GifByteType* data, int count)
+{
+  GifLdgBuffer *buf = (GifLdgBuffer *) gif->UserData;
+  
+	if (buf->offset + count <= buf->size)
+	{
+		memcpy(data, buf->data + buf->offset, count);
+		buf->offset += count;
+		return count;
+	}
+	
+	return 0;
+}
+
+GifFileType * CDECL gifdec_open(uint8_t *data, const int size)
+{
+  buffer.data = data;
+  buffer.size = size;
+  buffer.offset = 0;
+
+  return DGifOpen(&buffer, &gifldg_read, NULL);
+}
 int32_t CDECL gifdec_read(GifFileType *gif) { return (int32_t)DGifSlurp(gif); }
 
 const char * CDECL gifdec_get_gif_version(GifFileType *gif) { return DGifGetGifVersion(gif); }
@@ -102,8 +134,12 @@ int32_t CDECL gifdec_close(GifFileType *gif)
 {
   free(palette);
   palette = NULL;
- 
+
   DGifCloseFile(gif, NULL);
+
+  buffer.data = NULL;
+  buffer.size = 0;
+  buffer.offset = 0;
   
   return GIF_OK;
 }
