@@ -152,7 +152,7 @@ PROC LibFunc[] =
 {
   {"gifdec_get_lib_version", "const char* gifdec_get_lib_version();\n", gifdec_get_lib_version},
 
-  {"gifdec_open", "GifFileType* gifdec_open(const char *fileName);\n", gifdec_open},
+  {"gifdec_open", "GifFileType* gifdec_open(uint8_t *data, const int size);\n", gifdec_open},
   {"gifdec_read", "int32_t gifdec_read(GifFileType *gif);\n", gifdec_read},
 
   {"gifdec_get_gif_version", "const char* gifdec_get_gif_version(GifFileType *gif);\n", gifdec_get_gif_version},
