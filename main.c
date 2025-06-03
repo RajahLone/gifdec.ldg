@@ -14,9 +14,9 @@
 /* structures */
 
 typedef struct GifLdgBuffer {
-    uint8_t *data;
-    int size;
-    int offset;
+  uint8_t *data;
+  int size;
+  int offset;
 } GifLdgBuffer;
 
 /* global variables */
@@ -33,14 +33,14 @@ int gifldg_read(GifFileType* gif, GifByteType* data, int count)
 {
   GifLdgBuffer *buf = (GifLdgBuffer *) gif->UserData;
   
-	if (buf->offset + count <= buf->size)
-	{
-		memcpy(data, buf->data + buf->offset, count);
-		buf->offset += count;
-		return count;
-	}
-	
-	return 0;
+  if (buf->offset + count <= buf->size)
+  {
+    memcpy(data, buf->data + buf->offset, count);
+    buf->offset += count;
+    return count;
+  }
+  
+  return 0;
 }
 
 GifFileType * CDECL gifdec_open(uint8_t *data, const int size)
