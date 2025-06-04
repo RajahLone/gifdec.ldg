@@ -18,6 +18,6 @@ Other programs can use it, please read these sources and P2SM GFA source.
    ```mkdir ./build/68020```  
    ```mkdir ./build/ColdFire```  
 
-- get [gifdec_r1_src.zip](https://ptonthat.fr/files/gifdec/gifdec_r1_src.zip) and unpack the contents to ./
+- get /gifdec.ldg/ from [gifdec_r1_src.zip](https://ptonthat.fr/files/gifdec/gifdec_r1_src.zip) and unpack the contents to ./
 
 - gifdec.ldg.xcodeproj is for Xcode 16.3, you may not need it if you use something else.
