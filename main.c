@@ -29,7 +29,7 @@ static GifLdgBuffer buffer;
 
 const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE); }
 
-int gifldg_read(GifFileType* gif, GifByteType* data, int count)
+static int gifldg_read(GifFileType* gif, GifByteType* data, int count)
 {
   GifLdgBuffer *buf = (GifLdgBuffer *) gif->UserData;
   

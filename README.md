@@ -6,6 +6,7 @@ Instead of generating TC24 bitmap, the result is 2D width x height sized byte-ar
 Used by:
 
 * P2SM to handle large GIF pictures.
+* MapEdit to load tiles from GIF (tile singleton or tiles containor).
 * MAKE_MAP to slice large GIF into tiles and map array.
 
 Other programs can use it, please read these sources and P2SM GFA source.
