@@ -11,19 +11,22 @@
 #define VERSION_LIB(A,B,C) STRINGIFY(A) "." STRINGIFY(B) "." STRINGIFY(C)
 #define VERSION_LDG(A,B,C) "GIF decoder from The GIFLib Project (" STRINGIFY(A) "." STRINGIFY(B) "." STRINGIFY(C) ")"
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 /* structures */
 
-typedef struct GifLdgBuffer {
+typedef struct gif_mem_file {
   uint8_t *data;
   int size;
   int offset;
-} GifLdgBuffer;
+} gif_mem_file;
 
 /* global variables */
 
-static uint8_t *palette;
+static unsigned char palette[768] = { 0 };
 
-static GifLdgBuffer buffer;
+static gif_mem_file gif_mf;
 
 /* functions */
 
@@ -31,12 +34,16 @@ const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, G
 
 static int gifldg_read(GifFileType* gif, GifByteType* data, int count)
 {
-  GifLdgBuffer *buf = (GifLdgBuffer *) gif->UserData;
+  gif_mem_file *mf = (gif_mem_file *) gif->UserData;
+    
+  count = MIN(count, mf->size - mf->offset);
   
-  if (buf->offset + count <= buf->size)
+  if (count < 1) { return 0; }
+
+  if (mf->offset + count <= mf->size)
   {
-    memcpy(data, buf->data + buf->offset, count);
-    buf->offset += count;
+    memcpy(data, mf->data + mf->offset, count);
+    mf->offset += count;
     return count;
   }
   
@@ -45,11 +52,11 @@ static int gifldg_read(GifFileType* gif, GifByteType* data, int count)
 
 GifFileType * CDECL gifdec_open(uint8_t *data, const int size)
 {
-  buffer.data = data;
-  buffer.size = size;
-  buffer.offset = 0;
+  gif_mf.data = data;
+  gif_mf.size = size;
+  gif_mf.offset = 0;
 
-  return DGifOpen(&buffer, &gifldg_read, NULL);
+  return DGifOpen(&gif_mf, gifldg_read, NULL);
 }
 int32_t CDECL gifdec_read(GifFileType *gif) { return (int32_t)DGifSlurp(gif); }
 
@@ -84,10 +91,8 @@ uint8_t* CDECL gifdec_get_colors_table(GifFileType *gif, int idx)
   GifImageDesc *dsc = &gif->SavedImages[idx].ImageDesc;
   ColorMapObject *map = dsc->ColorMap ? dsc->ColorMap : gif->SColorMap;
   
-  if (!palette) { palette = (uint8_t *)malloc(768); }
-  
-  if (palette) { memset(palette, 0, 768); } else { return NULL; }
-  
+  memset(palette, 0, 768);
+
   p = palette;
   for (int c = 0; c < map->ColorCount; c++)
   {
@@ -132,14 +137,11 @@ int32_t CDECL gifdec_get_image_delay(GifFileType* gif, int idx)
 
 int32_t CDECL gifdec_close(GifFileType *gif)
 {
-  free(palette);
-  palette = NULL;
-
   DGifCloseFile(gif, NULL);
 
-  buffer.data = NULL;
-  buffer.size = 0;
-  buffer.offset = 0;
+  gif_mf.data = NULL;
+  gif_mf.size = 0;
+  gif_mf.offset = 0;
   
   return GIF_OK;
 }
