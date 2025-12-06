@@ -28,13 +28,13 @@ static unsigned char palette[768] = { 0 };
 
 static gif_mem_file gif_mf;
 
-/* functions */
+GifFileType *gif_read = NULL;
 
-const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE); }
+/* internal functions */
 
-static int gifldg_read(GifFileType* gif, GifByteType* data, int count)
+static int gifldg_read(GifFileType* gif_ptr, GifByteType* data, int count)
 {
-  gif_mem_file *mf = (gif_mem_file *) gif->UserData;
+  gif_mem_file *mf = (gif_mem_file *) gif_ptr->UserData;
     
   count = MIN(count, mf->size - mf->offset);
   
@@ -50,46 +50,111 @@ static int gifldg_read(GifFileType* gif, GifByteType* data, int count)
   return 0;
 }
 
-GifFileType * CDECL gifdec_open(uint8_t *data, const int size)
+/* functions */
+
+const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE); }
+
+int32_t CDECL gifdec_close()
 {
+  if (gif_read != NULL) { DGifCloseFile(gif_read, NULL); }
+
+  gif_read = NULL;
+ 
+  gif_mf.data = NULL;
+  gif_mf.size = 0;
+  gif_mf.offset = 0;
+  
+  return GIF_OK;
+}
+int32_t CDECL gifdec_open(uint8_t *data, const int size)
+{
+  if (gif_read != NULL) { gifdec_close(); }
+  
   gif_mf.data = data;
   gif_mf.size = size;
   gif_mf.offset = 0;
 
-  return DGifOpen(&gif_mf, gifldg_read, NULL);
-}
-int32_t CDECL gifdec_read(GifFileType *gif) { return (int32_t)DGifSlurp(gif); }
-
-const char * CDECL gifdec_get_gif_version(GifFileType *gif) { return DGifGetGifVersion(gif); }
-int32_t CDECL gifdec_get_width(GifFileType *gif) { return (int32_t)gif->SWidth; }
-int32_t CDECL gifdec_get_height(GifFileType *gif) { return (int32_t)gif->SHeight; }
-int32_t CDECL gifdec_get_bckgrnd_index(GifFileType *gif) { return (int32_t)gif->SBackGroundColor; }
-
-int32_t CDECL gifdec_get_images_count(GifFileType *gif) { return (int32_t)gif->ImageCount; }
-
-int32_t CDECL gifdec_get_image_top(GifFileType *gif, int idx) { return (idx < 0 || idx >= gif->ImageCount) ? 0 : (int32_t)gif->SavedImages[idx].ImageDesc.Top; }
-int32_t CDECL gifdec_get_image_left(GifFileType *gif, int idx) { return (idx < 0 || idx >= gif->ImageCount) ? 0 : (int32_t)gif->SavedImages[idx].ImageDesc.Left; }
-int32_t CDECL gifdec_get_image_width(GifFileType *gif, int idx) { return (idx < 0 || idx >= gif->ImageCount) ? (int32_t)gif->SWidth : (int32_t)gif->SavedImages[idx].ImageDesc.Width; }
-int32_t CDECL gifdec_get_image_height(GifFileType *gif, int idx) { return (idx < 0 || idx >= gif->ImageCount) ? (int32_t)gif->SHeight : (int32_t)gif->SavedImages[idx].ImageDesc.Height; }
-
-int32_t CDECL gifdec_get_colors_count(GifFileType *gif, int idx)
-{
-  if (idx < 0 || idx >= gif->ImageCount) { return 0; }
+  gif_read = DGifOpen(&gif_mf, gifldg_read, NULL);
   
-  GifImageDesc *dsc = &gif->SavedImages[idx].ImageDesc;
-  ColorMapObject *map = dsc->ColorMap ? dsc->ColorMap : gif->SColorMap;
+  if (gif_read) { return GIF_OK; }
+  
+  return GIF_ERROR;
+}
+
+int32_t CDECL gifdec_read()
+{
+  if (gif_read == NULL) { return GIF_ERROR; }
+  
+  return (int32_t)DGifSlurp(gif_read);
+}
+const char * CDECL gifdec_get_gif_version()
+{
+  if (gif_read == NULL) { return ""; }
+  return DGifGetGifVersion(gif_read);
+}
+int32_t CDECL gifdec_get_width()
+{
+  if (gif_read == NULL) { return 0; }
+  return (int32_t)gif_read->SWidth;
+}
+int32_t CDECL gifdec_get_height()
+{
+  if (gif_read == NULL) { return 0; }
+  return (int32_t)gif_read->SHeight;
+}
+int32_t CDECL gifdec_get_bckgrnd_index()
+{
+  if (gif_read == NULL) { return -1; }
+  return (int32_t)gif_read->SBackGroundColor;
+}
+
+int32_t CDECL gifdec_get_frames_count()
+{
+  if (gif_read == NULL) { return 0; }
+  return (int32_t)gif_read->ImageCount;
+}
+int32_t CDECL gifdec_get_frame_left(int idx)
+{
+  if (gif_read == NULL) { return 0; }
+  return (idx < 0 || idx >= gif_read->ImageCount) ? 0 : (int32_t)gif_read->SavedImages[idx].ImageDesc.Left;
+}
+int32_t CDECL gifdec_get_frame_top(int idx)
+{
+  if (gif_read == NULL) { return 0; }
+  return (idx < 0 || idx >= gif_read->ImageCount) ? 0 : (int32_t)gif_read->SavedImages[idx].ImageDesc.Top;
+}
+int32_t CDECL gifdec_get_frame_width(int idx)
+{
+  if (gif_read == NULL) { return 0; }
+  return (idx < 0 || idx >= gif_read->ImageCount) ? (int32_t)gif_read->SWidth : (int32_t)gif_read->SavedImages[idx].ImageDesc.Width;
+}
+int32_t CDECL gifdec_get_frame_height(int idx)
+{
+  if (gif_read == NULL) { return 0; }
+  return (idx < 0 || idx >= gif_read->ImageCount) ? (int32_t)gif_read->SHeight : (int32_t)gif_read->SavedImages[idx].ImageDesc.Height;
+}
+
+int32_t CDECL gifdec_get_colors_count( int idx)
+{
+  if (gif_read == NULL) { return 0; }
+  if (idx < 0 || idx >= gif_read->ImageCount) { return GIF_ERROR; }
+  
+  GifImageDesc *dsc = &gif_read->SavedImages[idx].ImageDesc;
+  ColorMapObject *map = dsc->ColorMap ? dsc->ColorMap : gif_read->SColorMap;
   
   return (int32_t)map->ColorCount;
 }
-uint8_t* CDECL gifdec_get_colors_table(GifFileType *gif, int idx)
+uint8_t* CDECL gifdec_get_colors_table(int idx)
 {
+  if (gif_read == NULL) { return NULL; }
+  
   GifColorType rgb;
   uint8_t *p;
   
-  if (idx < 0 || idx >= gif->ImageCount) { return NULL; }
+  if (idx < 0 || idx >= gif_read->ImageCount) { return NULL; }
   
-  GifImageDesc *dsc = &gif->SavedImages[idx].ImageDesc;
-  ColorMapObject *map = dsc->ColorMap ? dsc->ColorMap : gif->SColorMap;
+  GifImageDesc *dsc = &gif_read->SavedImages[idx].ImageDesc;
+  ColorMapObject *map = dsc->ColorMap ? dsc->ColorMap : gif_read->SColorMap;
   
   memset(palette, 0, 768);
 
@@ -105,45 +170,39 @@ uint8_t* CDECL gifdec_get_colors_table(GifFileType *gif, int idx)
   return palette;
 }
 
-GifByteType* CDECL gifdec_get_chunky_raster(GifFileType *gif, int idx)
+uint8_t* CDECL gifdec_get_chunky_raster(int idx)
 {
-  return (idx < 0 || idx >= gif->ImageCount) ? NULL : (gif->SavedImages[idx]).RasterBits;
+  if (gif_read == NULL) { return NULL; }
+  
+  return (idx < 0 || idx >= gif_read->ImageCount) ? NULL : (gif_read->SavedImages[idx]).RasterBits;
 }
 
-int32_t CDECL gifdec_get_image_disposal(GifFileType* gif, int idx)
+int32_t CDECL gifdec_get_image_disposal(int idx)
 {
-  if (idx < 0 || idx >= gif->ImageCount) { return 0; }
+  if (gif_read == NULL) { return 0; }
+  if (idx < 0 || idx >= gif_read->ImageCount) { return 0; }
   
   GraphicsControlBlock gcb = {0};
-  DGifSavedExtensionToGCB(gif, idx, &gcb);
+  DGifSavedExtensionToGCB(gif_read, idx, &gcb);
   return gcb.DisposalMode;
 }
-int32_t CDECL gifdec_get_trnsprnt_index(GifFileType* gif, int idx)
+int32_t CDECL gifdec_get_trnsprnt_index(int idx)
 {
-  if (idx < 0 || idx >= gif->ImageCount) { return -1; }
+  if (gif_read == NULL) { return -1; }
+  if (idx < 0 || idx >= gif_read->ImageCount) { return -1; }
   
   GraphicsControlBlock gcb = {0};
-  DGifSavedExtensionToGCB(gif, idx, &gcb);
+  DGifSavedExtensionToGCB(gif_read, idx, &gcb);
   return gcb.TransparentColor;
 }
-int32_t CDECL gifdec_get_image_delay(GifFileType* gif, int idx)
+int32_t CDECL gifdec_get_image_delay(int idx)
 {
-  if (idx < 0 || idx >= gif->ImageCount) { return 0; }
+  if (gif_read == NULL) { return 0; }
+  if (idx < 0 || idx >= gif_read->ImageCount) { return 0; }
   
   GraphicsControlBlock gcb = {0};
-  DGifSavedExtensionToGCB(gif, idx, &gcb);
+  DGifSavedExtensionToGCB(gif_read, idx, &gcb);
   return gcb.DelayTime;
-}
-
-int32_t CDECL gifdec_close(GifFileType *gif)
-{
-  DGifCloseFile(gif, NULL);
-
-  gif_mf.data = NULL;
-  gif_mf.size = 0;
-  gif_mf.offset = 0;
-  
-  return GIF_OK;
 }
 
 const char * CDECL gifdec_get_last_error(GifFileType *gif) { return GifErrorString(gif->Error); }
@@ -154,33 +213,33 @@ PROC LibFunc[] =
 {
   {"gifdec_get_lib_version", "const char* gifdec_get_lib_version();\n", gifdec_get_lib_version},
 
-  {"gifdec_open", "GifFileType* gifdec_open(uint8_t *data, const int size);\n", gifdec_open},
-  {"gifdec_read", "int32_t gifdec_read(GifFileType *gif);\n", gifdec_read},
+  {"gifdec_open", "int32_t gifdec_open(uint8_t *data, const int size);\n", gifdec_open},
+  {"gifdec_read", "int32_t gifdec_read();\n", gifdec_read},
 
-  {"gifdec_get_gif_version", "const char* gifdec_get_gif_version(GifFileType *gif);\n", gifdec_get_gif_version},
-  {"gifdec_get_width", "int32_t gifdec_get_width(GifFileType *gif);\n", gifdec_get_width},
-  {"gifdec_get_height", "int32_t gifdec_get_height(GifFileType *gif);\n", gifdec_get_height},
-  {"gifdec_get_bckgrnd_index", "int32_t gifdec_get_bckgrnd_index(GifFileType *gif);\n", gifdec_get_bckgrnd_index},
+  {"gifdec_get_gif_version", "const char* gifdec_get_gif_version();\n", gifdec_get_gif_version},
+  {"gifdec_get_width", "int32_t gifdec_get_width();\n", gifdec_get_width},
+  {"gifdec_get_height", "int32_t gifdec_get_height();\n", gifdec_get_height},
+  {"gifdec_get_bckgrnd_index", "int32_t gifdec_get_bckgrnd_index();\n", gifdec_get_bckgrnd_index},
 
-  {"gifdec_get_images_count", "int32_t gifdec_get_images_count(GifFileType *gif);\n", gifdec_get_images_count},
-  {"gifdec_get_image_top", "int32_t gifdec_get_image_top(GifFileType *gif, int idx);\n", gifdec_get_image_top},
-  {"gifdec_get_image_left", "int32_t gifdec_get_image_left(GifFileType *gif, int idx);\n", gifdec_get_image_left},
-  {"gifdec_get_image_width", "int32_t gifdec_get_image_width(GifFileType *gif, int idx);\n", gifdec_get_image_width},
-  {"gifdec_get_image_height", "int32_t gifdec_get_image_height(GifFileType *gif, int idx);\n", gifdec_get_image_height},
-  {"gifdec_get_colors_count", "int32_t gifdec_get_colors_count(GifFileType *gif, int idx);\n", gifdec_get_colors_count},
-  {"gifdec_get_colors_table", "uint8_t* gifdec_get_colors_table(GifFileType *gif, int idx);\n", gifdec_get_colors_table},
-  {"gifdec_get_chunky_raster", "uint8_t* gifdec_get_chunky_raster(GifFileType *gif, int idx);\n", gifdec_get_chunky_raster},
+  {"gifdec_get_frames_count", "int32_t gifdec_get_images_count();\n", gifdec_get_frames_count},
+  {"gifdec_get_frame_left", "int32_t gifdec_get_image_left(int idx);\n", gifdec_get_frame_left},
+  {"gifdec_get_frame_top", "int32_t gifdec_get_image_top(int idx);\n", gifdec_get_frame_top},
+  {"gifdec_get_frame_width", "int32_t gifdec_get_image_width(int idx);\n", gifdec_get_frame_width},
+  {"gifdec_get_frame_height", "int32_t gifdec_get_image_height(int idx);\n", gifdec_get_frame_height},
+  {"gifdec_get_colors_count", "int32_t gifdec_get_colors_count(int idx);\n", gifdec_get_colors_count},
+  {"gifdec_get_colors_table", "uint8_t* gifdec_get_colors_table(int idx);\n", gifdec_get_colors_table},
+  {"gifdec_get_chunky_raster", "uint8_t* gifdec_get_chunky_raster(int idx);\n", gifdec_get_chunky_raster},
   
-  {"gifdec_get_image_disposal", "int32_t gifdec_get_image_disposal(GifFileType* gif, int idx);\n", gifdec_get_image_disposal},
-  {"gifdec_get_trnsprnt_index", "int32_t gifdec_get_trnsprnt_index(GifFileType* gif, int idx);\n", gifdec_get_trnsprnt_index},
-  {"gifdec_get_image_delay", "int32_t gifdec_get_image_delay(GifFileType* gif, int idx);\n", gifdec_get_image_delay},
+  {"gifdec_get_image_disposal", "int32_t gifdec_get_image_disposal(int idx);\n", gifdec_get_image_disposal},
+  {"gifdec_get_trnsprnt_index", "int32_t gifdec_get_trnsprnt_index(int idx);\n", gifdec_get_trnsprnt_index},
+  {"gifdec_get_image_delay", "int32_t gifdec_get_image_delay(int idx);\n", gifdec_get_image_delay},
 
-  {"gifdec_close", "int32_t gifdec_close(GifFileType *gif);\n", gifdec_close},
+  {"gifdec_close", "int32_t gifdec_close();\n", gifdec_close},
 
-  {"gifdec_get_last_error", "const char* gifdec_get_last_error(GifFileType *gif);\n", gifdec_get_last_error},
+  {"gifdec_get_last_error", "const char* gifdec_get_last_error();\n", gifdec_get_last_error},
 };
 
-LDGLIB LibLdg[] = { { 0x0003, 20, LibFunc, VERSION_LDG(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE), 1} };
+LDGLIB LibLdg[] = { { 0x0004, 20, LibFunc, VERSION_LDG(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE), 1} };
 
 /*  */
 
