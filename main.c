@@ -56,7 +56,9 @@ const char * CDECL gifdec_get_lib_version() { return VERSION_LIB(GIFLIB_MAJOR, G
 
 int32_t CDECL gifdec_close()
 {
-  if (gif_read != NULL) { DGifCloseFile(gif_read, NULL); }
+  int err = 0;
+  
+  if (gif_read != NULL) { DGifCloseFile(gif_read, &err); }
 
   gif_read = NULL;
  
@@ -74,7 +76,9 @@ int32_t CDECL gifdec_open(uint8_t *data, const int size)
   gif_mf.size = size;
   gif_mf.offset = 0;
 
-  gif_read = DGifOpen(&gif_mf, gifldg_read, NULL);
+  int err = 0;
+
+  gif_read = DGifOpen(&gif_mf, gifldg_read, &err);
   
   if (gif_read) { return GIF_OK; }
   
@@ -86,11 +90,6 @@ int32_t CDECL gifdec_read()
   if (gif_read == NULL) { return GIF_ERROR; }
   
   return (int32_t)DGifSlurp(gif_read);
-}
-const char * CDECL gifdec_get_gif_version()
-{
-  if (gif_read == NULL) { return ""; }
-  return DGifGetGifVersion(gif_read);
 }
 int32_t CDECL gifdec_get_width()
 {
@@ -216,7 +215,6 @@ PROC LibFunc[] =
   {"gifdec_open", "int32_t gifdec_open(uint8_t *data, const int size);\n", gifdec_open},
   {"gifdec_read", "int32_t gifdec_read();\n", gifdec_read},
 
-  {"gifdec_get_gif_version", "const char* gifdec_get_gif_version();\n", gifdec_get_gif_version},
   {"gifdec_get_width", "int32_t gifdec_get_width();\n", gifdec_get_width},
   {"gifdec_get_height", "int32_t gifdec_get_height();\n", gifdec_get_height},
   {"gifdec_get_bckgrnd_index", "int32_t gifdec_get_bckgrnd_index();\n", gifdec_get_bckgrnd_index},
@@ -239,7 +237,7 @@ PROC LibFunc[] =
   {"gifdec_get_last_error", "const char* gifdec_get_last_error();\n", gifdec_get_last_error},
 };
 
-LDGLIB LibLdg[] = { { 0x0004, 20, LibFunc, VERSION_LDG(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE), 1} };
+LDGLIB LibLdg[] = { { 0x0004, 19, LibFunc, VERSION_LDG(GIFLIB_MAJOR, GIFLIB_MINOR, GIFLIB_RELEASE), 1} };
 
 /*  */
 
