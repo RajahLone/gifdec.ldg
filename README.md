@@ -15,11 +15,6 @@ Other programs can use it, please read these sources and P2SM GFA source.
 
 - pre-requisite: different targets of libldg.a in /opt/cross-mint/m68k-atari-mint/lib/
 
-- in an empty folder,  
-   ```mkdir ./build/68000```  
-   ```mkdir ./build/68020```  
-   ```mkdir ./build/ColdFire```  
+- get /gifdec.ldg/ from [codecs_r5_src.zip](https://ptonthat.fr/files/gifdec/codecs_r5_src.zip) and unpack the contents to ./
 
-- get /gifdec.ldg/ from [codecs_r4_src.zip](https://ptonthat.fr/files/gifdec/codecs_r4_src.zip) and unpack the contents to ./
-
-- gifdec.ldg.xcodeproj is for Xcode 26.1, you may not need it if you use something else.
+- pngdec.ldg.xcodeproj is for Xcode 26.3, you may not need it if you use something else.
