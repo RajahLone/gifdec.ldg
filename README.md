@@ -17,4 +17,6 @@ Other programs can use it, please read these sources and P2SM GFA source.
 
 - get /gifdec.ldg/ from [codecs_r5_src.zip](https://ptonthat.fr/files/gifdec/codecs_r5_src.zip) and unpack the contents to ./
 
+- install [libcmini/lib/](https://github.com/freemint/libcmini/releases/) a files on a location outside /opt/cross-mint/m68k-atari-mint/lib/ (ie in your workspace besides other projects) and fix $CMINI path in the Makefile.
+
 - pngdec.ldg.xcodeproj is for Xcode 26.3, you may not need it if you use something else.
